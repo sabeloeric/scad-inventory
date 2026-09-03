@@ -119,7 +119,7 @@ requirement should make that policy explicit.
 
 ## Planned scope
 
-The next slice proves concurrent oversell prevention, then adds JWT authentication
-and activates the authorized stock-read endpoint. Order persistence, refresh
-tokens, and product or warehouse update/delete endpoints are intentionally out
-of scope until the core requirements are complete.
+The next slice adds JWT authentication and activates the authorized stock-read
+endpoint. Order persistence, refresh tokens, and product or warehouse
+update/delete endpoints are intentionally out of scope until the core
+requirements are complete.
