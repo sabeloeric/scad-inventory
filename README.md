@@ -2,8 +2,9 @@
 
 SCAD Inventory is a compact inventory-management assessment project built with
 ASP.NET Core, PostgreSQL, Dapper, and React. It supports products, warehouses,
-initial stock, authenticated warehouse-scoped stock reads, and atomic stock
-transfers that prevent concurrent overselling.
+stock receiving that accumulates on repeat receipts, authenticated
+warehouse-scoped stock reads, and atomic stock transfers that prevent
+concurrent overselling.
 
 ## Architecture
 
@@ -29,13 +30,17 @@ models. No ORM is used.
 - Product list, detail, and create endpoints with normalized codes and duplicate
   handling.
 - Warehouse list and create endpoints.
-- Insert-only initial stock and product/warehouse stock queries.
+- Stock receiving that upserts (adds to the existing quantity instead of
+  failing) and product/warehouse-scoped stock queries.
 - Atomic transfers with deterministic PostgreSQL row locking.
 - JWT login backed by seeded bcrypt password hashes.
 - SQL-enforced stock visibility for the authenticated user's warehouse.
 - Consistent JSON application and validation errors.
-- Real PostgreSQL HTTP integration tests using Testcontainers.
-- React login, product list, product detail, and product creation flows.
+- Real PostgreSQL HTTP integration tests using Testcontainers, plus unit tests
+  over the pure transfer arithmetic and insufficient-stock guard.
+- A React console covering login, a dashboard overview, products (list, detail,
+  create), inventory (list, receive stock), warehouses (list, create), and
+  stock transfers.
 - A Playwright flow covering the UI, API, authentication, and PostgreSQL.
 - Docker Compose for PostgreSQL, the API, the UI, and profile-gated Playwright.
 
@@ -180,13 +185,20 @@ curl http://localhost:5097/warehouses \
   --header "Authorization: Bearer $TOKEN"
 ```
 
-Add initial stock and query visible stock:
+Receive stock and query visible stock. Posting to the same product and
+warehouse again adds to the existing quantity instead of failing:
 
 ```bash
 curl --request POST http://localhost:5097/stock \
   --header "Authorization: Bearer $TOKEN" \
   --header 'Content-Type: application/json' \
   --data '{"productCode":"ABC002","warehouseCode":"JHB","quantity":100}'
+
+curl --request POST http://localhost:5097/stock \
+  --header "Authorization: Bearer $TOKEN" \
+  --header 'Content-Type: application/json' \
+  --data '{"productCode":"ABC002","warehouseCode":"JHB","quantity":50}'
+# => quantity: 150
 
 curl 'http://localhost:5097/stock?productCode=ABC002' \
   --header "Authorization: Bearer $TOKEN"
