@@ -5,10 +5,10 @@ PostgreSQL, Dapper, and React.
 
 ## Current status
 
-The repository contains a clean application scaffold, a PostgreSQL database
-foundation, and a configured Dapper/Npgsql connection factory. API features,
-authentication, and the product UI will be added in small, independently tested
-slices.
+The repository contains a PostgreSQL database foundation, a configured
+Dapper/Npgsql connection factory, and product list/detail/create endpoints with
+consistent validation and error responses. Authentication and the product UI
+will be added in later slices.
 
 ## Prerequisites
 
@@ -29,6 +29,9 @@ Run the automated tests:
 ```bash
 dotnet test Scad.Inventory.sln
 ```
+
+The integration project starts an isolated PostgreSQL Testcontainer and applies
+the checked-in schema; Docker must be running.
 
 Run the UI locally:
 
@@ -64,6 +67,18 @@ dotnet run --project src/Scad.Inventory.Api
 This connection string is development-only. Production configuration must be
 provided through the environment or a secret store, never committed settings.
 
+## Implemented API
+
+The following unauthenticated development endpoints are currently available:
+
+```text
+GET  /products
+GET  /products/{code}
+POST /products
+```
+
+Authentication will protect them when the JWT slice is added.
+
 The container applies `database/001_schema.sql` and `database/002_seed.sql`
 when its named volume is created. The seed data contains JHB and CPT warehouses,
 product `ABC001`, and stock of 100 and 20 respectively.
@@ -82,7 +97,7 @@ docker compose up -d postgres
 
 ## Planned scope
 
-The next slice adds the product API with validation, duplicate handling, and
-real PostgreSQL HTTP tests. Order persistence, refresh tokens, and product or
-warehouse update/delete endpoints are intentionally out of scope until the core
-requirements are complete.
+The next slice adds warehouse list/create endpoints and duplicate-code handling.
+Order persistence, refresh tokens, and product or warehouse update/delete
+endpoints are intentionally out of scope until the core requirements are
+complete.
