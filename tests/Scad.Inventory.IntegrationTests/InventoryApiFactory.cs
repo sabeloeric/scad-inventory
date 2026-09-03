@@ -41,6 +41,36 @@ public sealed class InventoryApiFactory : WebApplicationFactory<Program>, IAsync
         return await connection.QuerySingleAsync<long>(sql, new { Code = code });
     }
 
+    public async Task<int?> GetStockQuantityAsync(string productCode, string warehouseCode)
+    {
+        const string sql = """
+            SELECT stock.quantity
+            FROM stock
+            JOIN products ON products.id = stock.product_id
+            JOIN warehouses ON warehouses.id = stock.warehouse_id
+            WHERE products.code = @ProductCode
+              AND warehouses.code = @WarehouseCode;
+            """;
+
+        await using var connection = new NpgsqlConnection(_postgres.GetConnectionString());
+        return await connection.QuerySingleOrDefaultAsync<int?>(
+            sql,
+            new { ProductCode = productCode, WarehouseCode = warehouseCode });
+    }
+
+    public async Task<int> GetTotalStockAsync(string productCode)
+    {
+        const string sql = """
+            SELECT COALESCE(SUM(stock.quantity), 0)::INTEGER
+            FROM stock
+            JOIN products ON products.id = stock.product_id
+            WHERE products.code = @ProductCode;
+            """;
+
+        await using var connection = new NpgsqlConnection(_postgres.GetConnectionString());
+        return await connection.QuerySingleAsync<int>(sql, new { ProductCode = productCode });
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");

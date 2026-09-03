@@ -1,5 +1,6 @@
 using Scad.Inventory.Api.Data;
 using Scad.Inventory.Api.Errors;
+using Scad.Inventory.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ builder.Services.AddSingleton<IDbConnectionFactory>(
 builder.Services.AddScoped<ProductRepository>();
 builder.Services.AddScoped<WarehouseRepository>();
 builder.Services.AddScoped<StockRepository>();
+builder.Services.AddScoped<StockTransferService>();
 
 var app = builder.Build();
 

@@ -10,7 +10,8 @@ Dapper/Npgsql connection factory, and product list/detail/create endpoints with
 consistent validation and error responses. Warehouse list/create endpoints are
 also implemented. Authentication and the product UI will be added later.
 Insert-only initial stock and warehouse-scoped stock data access are also
-implemented.
+implemented. Stock transfers use a single PostgreSQL transaction and row-level
+locks to update both warehouses atomically.
 
 ## Prerequisites
 
@@ -80,6 +81,7 @@ POST /products
 GET  /warehouses
 POST /warehouses
 POST /stock
+POST /orders
 ```
 
 Authentication will protect them when the JWT slice is added.
@@ -100,10 +102,24 @@ docker compose down -v
 docker compose up -d postgres
 ```
 
+## Transfer concurrency
+
+Transfers use PostgreSQL row-level locks (`SELECT ... FOR UPDATE`) inside one
+transaction. Concurrent transfers touching the same stock wait for the lock
+holder, so each request validates the latest committed quantity before updating.
+This prevents overselling and is straightforward to reason about, at the cost of
+serializing transfers for the same stock rows and reducing throughput under
+contention. Rows are locked in deterministic warehouse-ID order to reduce
+deadlock risk.
+
+The assessment brief scopes stock reads by the authenticated user's warehouse,
+but does not explicitly restrict transfer source or destination warehouses. The
+API therefore does not add warehouse-scoped write authorization. A production
+requirement should make that policy explicit.
+
 ## Planned scope
 
-The next slice adds atomic stock transfers with PostgreSQL row locks. The stock
-read repository already requires an authorized warehouse ID; its HTTP endpoint
-will be activated when JWT claims are available. Order persistence, refresh
+The next slice proves concurrent oversell prevention, then adds JWT authentication
+and activates the authorized stock-read endpoint. Order persistence, refresh
 tokens, and product or warehouse update/delete endpoints are intentionally out
 of scope until the core requirements are complete.
