@@ -72,13 +72,13 @@ export function WarehousesPage() {
           {warehouses.map((warehouse) => {
             const isCurrent = warehouse.code === session?.user.warehouseCode
             return (
-              <article className={`warehouse-card${isCurrent ? ' warehouse-card-current' : ''}`} key={warehouse.code}>
+              <article className="warehouse-card" key={warehouse.code}>
                 <div className="warehouse-card-topline">
                   <span className="warehouse-monogram" aria-hidden="true">{warehouse.code.slice(0, 2)}</span>
                   {isCurrent && <span className="status-badge">Current workspace</span>}
                 </div>
                 <div>
-                  <span className="eyebrow">{warehouse.code}</span>
+                  <span className="warehouse-card-code">{warehouse.code}</span>
                   <h2>{warehouse.name}</h2>
                 </div>
                 <Link className="text-link" to={`/transfers/new?destination=${encodeURIComponent(warehouse.code)}`}>

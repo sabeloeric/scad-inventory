@@ -144,7 +144,7 @@ export function NewTransferPage() {
   }
 
   return (
-    <section aria-labelledby="transfer-title">
+    <section className="form-page" aria-labelledby="transfer-title">
       <PageHeader
         headingId="transfer-title"
         eyebrow="Inventory operation"
@@ -166,91 +166,82 @@ export function NewTransferPage() {
       )}
 
       {!loadingOptions && !optionsError && products.length > 0 && warehouses.length >= 2 && (
-        <div className="operation-grid">
-          <form className="form-card form-stack" onSubmit={handleSubmit} noValidate>
-            {formError && <div className="alert alert-error" role="alert">{formError}</div>}
+        <form className="form-card form-stack" onSubmit={handleSubmit} noValidate>
+          {formError && <div className="alert alert-error" role="alert">{formError}</div>}
+          <div className="field">
+            <label htmlFor="transfer-product">Product</label>
+            <select
+              id="transfer-product"
+              value={productCode}
+              onChange={(event) => setProductCode(event.target.value)}
+              aria-invalid={Boolean(errors.productCode)}
+            >
+              {products.map((product) => (
+                <option value={product.code} key={product.code}>{product.code} — {product.description}</option>
+              ))}
+            </select>
+            {errors.productCode && <span className="field-error">{errors.productCode[0]}</span>}
+          </div>
+
+          <div className="form-row">
             <div className="field">
-              <label htmlFor="transfer-product">Product</label>
+              <label htmlFor="source-warehouse">Source warehouse</label>
               <select
-                id="transfer-product"
-                value={productCode}
-                onChange={(event) => setProductCode(event.target.value)}
-                aria-invalid={Boolean(errors.productCode)}
+                id="source-warehouse"
+                value={sourceCode}
+                onChange={(event) => changeSource(event.target.value)}
+                aria-invalid={Boolean(errors.sourceWarehouseCode)}
               >
-                {products.map((product) => (
-                  <option value={product.code} key={product.code}>{product.code} — {product.description}</option>
+                {warehouses.map((warehouse) => (
+                  <option value={warehouse.code} key={warehouse.code}>
+                    {warehouse.code}{warehouse.code === session?.user.warehouseCode ? ' (current)' : ''}
+                  </option>
                 ))}
               </select>
-              {errors.productCode && <span className="field-error">{errors.productCode[0]}</span>}
-            </div>
-
-            <div className="form-row">
-              <div className="field">
-                <label htmlFor="source-warehouse">Source warehouse</label>
-                <select
-                  id="source-warehouse"
-                  value={sourceCode}
-                  onChange={(event) => changeSource(event.target.value)}
-                  aria-invalid={Boolean(errors.sourceWarehouseCode)}
-                >
-                  {warehouses.map((warehouse) => (
-                    <option value={warehouse.code} key={warehouse.code}>
-                      {warehouse.code}{warehouse.code === session?.user.warehouseCode ? ' (current)' : ''}
-                    </option>
-                  ))}
-                </select>
-                {errors.sourceWarehouseCode && <span className="field-error">{errors.sourceWarehouseCode[0]}</span>}
-              </div>
-
-              <div className="field">
-                <label htmlFor="destination-warehouse">Destination warehouse</label>
-                <select
-                  id="destination-warehouse"
-                  value={destinationCode}
-                  onChange={(event) => setDestinationCode(event.target.value)}
-                  aria-invalid={Boolean(errors.destinationWarehouseCode)}
-                >
-                  {warehouses.filter((warehouse) => warehouse.code !== sourceCode).map((warehouse) => (
-                    <option value={warehouse.code} key={warehouse.code}>{warehouse.code} — {warehouse.name}</option>
-                  ))}
-                </select>
-                {errors.destinationWarehouseCode && <span className="field-error">{errors.destinationWarehouseCode[0]}</span>}
-              </div>
+              {errors.sourceWarehouseCode && <span className="field-error">{errors.sourceWarehouseCode[0]}</span>}
             </div>
 
             <div className="field">
-              <label htmlFor="transfer-quantity">Quantity to transfer</label>
-              <div className="input-suffix">
-                <input
-                  id="transfer-quantity"
-                  type="number"
-                  min="1"
-                  step="1"
-                  inputMode="numeric"
-                  value={quantity}
-                  onChange={(event) => setQuantity(event.target.value)}
-                  aria-invalid={Boolean(errors.quantity)}
-                />
-                <span>units</span>
-              </div>
-              {errors.quantity && <span className="field-error">{errors.quantity[0]}</span>}
+              <label htmlFor="destination-warehouse">Destination warehouse</label>
+              <select
+                id="destination-warehouse"
+                value={destinationCode}
+                onChange={(event) => setDestinationCode(event.target.value)}
+                aria-invalid={Boolean(errors.destinationWarehouseCode)}
+              >
+                {warehouses.filter((warehouse) => warehouse.code !== sourceCode).map((warehouse) => (
+                  <option value={warehouse.code} key={warehouse.code}>{warehouse.code} — {warehouse.name}</option>
+                ))}
+              </select>
+              {errors.destinationWarehouseCode && <span className="field-error">{errors.destinationWarehouseCode[0]}</span>}
             </div>
+          </div>
 
-            <div className="form-actions">
-              <button className="button" type="submit" disabled={submitting}>
-                {submitting ? 'Transferring…' : 'Transfer stock'}
-              </button>
-              <Link className="button button-secondary" to="/inventory">Cancel</Link>
+          <div className="field">
+            <label htmlFor="transfer-quantity">Quantity to transfer</label>
+            <div className="input-suffix">
+              <input
+                id="transfer-quantity"
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                value={quantity}
+                onChange={(event) => setQuantity(event.target.value)}
+                aria-invalid={Boolean(errors.quantity)}
+              />
+              <span>units</span>
             </div>
-          </form>
+            {errors.quantity && <span className="field-error">{errors.quantity[0]}</span>}
+          </div>
 
-          <aside className="context-card">
-            <span className="eyebrow">Protected movement</span>
-            <h2>Safe under concurrency</h2>
-            <p>Source and destination rows are locked in a deterministic order before quantities change.</p>
-            <p>If stock is insufficient, the entire operation rolls back and neither warehouse is changed.</p>
-          </aside>
-        </div>
+          <div className="form-actions">
+            <button className="button" type="submit" disabled={submitting}>
+              {submitting ? 'Transferring…' : 'Transfer stock'}
+            </button>
+            <Link className="button button-secondary" to="/inventory">Cancel</Link>
+          </div>
+        </form>
       )}
     </section>
   )

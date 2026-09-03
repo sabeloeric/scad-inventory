@@ -40,15 +40,15 @@ test('user manages the warehouse catalogue, stock, transfers, and locations', as
   await expect(page.getByRole('heading', { name: productCode })).toBeVisible()
   await expect(page.getByRole('article').getByText(description)).toBeVisible()
 
-  await page.getByRole('link', { name: 'Receive stock', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'Receive initial stock' })).toBeVisible()
+  await page.getByRole('link', { name: 'Receive stock' }).first().click()
+  await expect(page.getByRole('heading', { name: 'Receive stock' })).toBeVisible()
   await expect(page.getByLabel('Product')).toHaveValue(productCode)
   await page.getByLabel('Warehouse').selectOption('JHB')
   await page.getByLabel('Quantity').fill('100')
   await page.getByRole('button', { name: 'Receive stock' }).click()
 
   await expect(page.getByRole('heading', { name: 'Stock received' })).toBeVisible()
-  await expect(page.getByText('100 units')).toBeVisible()
+  await expect(page.getByText('100 units', { exact: true })).toBeVisible()
   await page.getByRole('link', { name: 'View inventory' }).click()
 
   const stockedProductRow = page.getByRole('row', { name: new RegExp(productCode) })
@@ -67,6 +67,19 @@ test('user manages the warehouse catalogue, stock, transfers, and locations', as
   await page.getByRole('link', { name: 'View inventory' }).click()
   await expect(page.getByRole('row', { name: new RegExp(productCode) })).toContainText('70')
 
+  await page.getByRole('link', { name: 'Receive stock' }).click()
+  await expect(page.getByRole('heading', { name: 'Receive stock' })).toBeVisible()
+  await page.getByLabel('Product').selectOption(productCode)
+  await page.getByLabel('Warehouse').selectOption('JHB')
+  await page.getByLabel('Quantity').fill('50')
+  await page.getByRole('button', { name: 'Receive stock' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Stock received' })).toBeVisible()
+  await expect(page.getByText('50 units were added.')).toBeVisible()
+  await expect(page.getByText('120 units')).toBeVisible()
+  await page.getByRole('link', { name: 'View inventory' }).click()
+  await expect(page.getByRole('row', { name: new RegExp(productCode) })).toContainText('120')
+
   await page.getByRole('link', { name: 'Warehouses' }).click()
   await expect(page.getByRole('heading', { name: 'Warehouses' })).toBeVisible()
   await page.getByRole('link', { name: 'Create warehouse' }).click()
@@ -82,11 +95,6 @@ test('user manages the warehouse catalogue, stock, transfers, and locations', as
   await expect(page.getByRole('heading', { name: 'Warehouse overview' })).toBeVisible()
   await expect(warehouseStatValue).toHaveText(String(initialWarehouseCount + 1))
   await expect(page.getByRole('heading', { name: 'Current stock' })).toBeVisible()
-  const quickActions = page.getByRole('complementary', { name: 'Quick actions' })
-  await expect(quickActions.getByRole('link', { name: 'Create product' })).toBeVisible()
-  await expect(quickActions.getByRole('link', { name: 'Receive stock' })).toBeVisible()
-  await expect(quickActions.getByRole('link', { name: 'Transfer stock' })).toBeVisible()
-
-  await quickActions.getByRole('link', { name: 'Add warehouse' }).click()
-  await expect(page.getByRole('heading', { name: 'Create warehouse' })).toBeVisible()
+  await expect(page.getByRole('row', { name: new RegExp(productCode) })).toContainText('120')
+  await expect(page.getByRole('link', { name: 'New transfer' })).toBeVisible()
 })

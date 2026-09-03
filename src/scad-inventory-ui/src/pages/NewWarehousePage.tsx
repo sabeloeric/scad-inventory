@@ -47,52 +47,44 @@ export function NewWarehousePage() {
   }
 
   return (
-    <section aria-labelledby="new-warehouse-title">
+    <section className="form-page" aria-labelledby="new-warehouse-title">
       <PageHeader
         headingId="new-warehouse-title"
         eyebrow="Network"
         title="Create warehouse"
         description="Add a location that can receive and transfer stock."
       />
-      <div className="operation-grid">
-        <form className="form-card form-stack" onSubmit={handleSubmit} noValidate>
-          {formError && <div className="alert alert-error" role="alert">{formError}</div>}
-          <div className="field">
-            <label htmlFor="warehouse-code">Warehouse code</label>
-            <input
-              id="warehouse-code"
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              aria-invalid={Boolean(errors.code)}
-              aria-describedby={errors.code ? 'warehouse-code-error' : 'warehouse-code-help'}
-            />
-            <span id="warehouse-code-help" className="field-help">Codes are normalized to uppercase.</span>
-            {errors.code && <span id="warehouse-code-error" className="field-error">{errors.code[0]}</span>}
-          </div>
-          <div className="field">
-            <label htmlFor="warehouse-name">Warehouse name</label>
-            <input
-              id="warehouse-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              aria-invalid={Boolean(errors.name)}
-            />
-            {errors.name && <span className="field-error">{errors.name[0]}</span>}
-          </div>
-          <div className="form-actions">
-            <button className="button" type="submit" disabled={submitting}>
-              {submitting ? 'Creating…' : 'Create warehouse'}
-            </button>
-            <Link className="button button-secondary" to="/warehouses">Cancel</Link>
-          </div>
-        </form>
-        <aside className="context-card">
-          <span className="eyebrow">Location setup</span>
-          <h2>A shared network</h2>
-          <p>Warehouses are visible to authenticated users so they can be selected as transfer destinations.</p>
-          <p>Each user's stock view remains scoped to the warehouse recorded in their account.</p>
-        </aside>
-      </div>
+      <form className="form-card form-stack" onSubmit={handleSubmit} noValidate>
+        {formError && <div className="alert alert-error" role="alert">{formError}</div>}
+        <div className="field">
+          <label htmlFor="warehouse-code">Warehouse code</label>
+          <input
+            id="warehouse-code"
+            value={code}
+            onChange={(event) => setCode(event.target.value)}
+            aria-invalid={Boolean(errors.code)}
+            aria-describedby={errors.code ? 'warehouse-code-error' : 'warehouse-code-help'}
+          />
+          <span id="warehouse-code-help" className="field-help">Codes are normalized to uppercase.</span>
+          {errors.code && <span id="warehouse-code-error" className="field-error">{errors.code[0]}</span>}
+        </div>
+        <div className="field">
+          <label htmlFor="warehouse-name">Warehouse name</label>
+          <input
+            id="warehouse-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            aria-invalid={Boolean(errors.name)}
+          />
+          {errors.name && <span className="field-error">{errors.name[0]}</span>}
+        </div>
+        <div className="form-actions">
+          <button className="button" type="submit" disabled={submitting}>
+            {submitting ? 'Creating…' : 'Create warehouse'}
+          </button>
+          <Link className="button button-secondary" to="/warehouses">Cancel</Link>
+        </div>
+      </form>
     </section>
   )
 }

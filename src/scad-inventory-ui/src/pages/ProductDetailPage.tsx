@@ -69,7 +69,6 @@ export function ProductDetailPage() {
         <>
           <article className="detail-card product-hero">
             <div>
-              <div className="eyebrow">Product detail</div>
               <h1 id="product-title">{product.code}</h1>
               <p className="product-description">{product.description}</p>
             </div>
@@ -82,10 +81,7 @@ export function ProductDetailPage() {
           <div className="detail-grid">
             <section className="panel" aria-labelledby="stock-summary-title">
               <div className="panel-heading">
-                <div>
-                  <span className="eyebrow">{session?.user.warehouseCode} warehouse</span>
-                  <h2 id="stock-summary-title">Stock summary</h2>
-                </div>
+                <h2 id="stock-summary-title">Stock at {session?.user.warehouseCode}</h2>
               </div>
               {stock ? (
                 <div className="stock-summary">
@@ -95,16 +91,13 @@ export function ProductDetailPage() {
               ) : (
                 <div className="panel-empty">
                   <p>No stock position exists at your warehouse.</p>
-                  <Link className="text-link" to={`/inventory/new?product=${encodeURIComponent(product.code)}`}>Receive initial stock</Link>
+                  <Link className="text-link" to={`/inventory/new?product=${encodeURIComponent(product.code)}`}>Receive stock</Link>
                 </div>
               )}
             </section>
             <section className="panel" aria-labelledby="product-information-title">
               <div className="panel-heading">
-                <div>
-                  <span className="eyebrow">Reference</span>
-                  <h2 id="product-information-title">Product information</h2>
-                </div>
+                <h2 id="product-information-title">Product information</h2>
               </div>
               <dl className="compact-list">
                 <div><dt>Code</dt><dd>{product.code}</dd></div>

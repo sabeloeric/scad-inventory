@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ApiRequestError } from '../api/client'
 import { listProducts, type Product } from '../api/products'
-import { createInitialStock, type InitialStock } from '../api/stock'
+import { addStock, type StockReceipt } from '../api/stock'
 import { listWarehouses, type Warehouse } from '../api/warehouses'
 import { useAuth } from '../auth/AuthContext'
 import { ErrorState, LoadingState } from '../components/AsyncState'
@@ -18,7 +18,8 @@ export function NewStockPage() {
   const [quantity, setQuantity] = useState('')
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [formError, setFormError] = useState<string | null>(null)
-  const [receipt, setReceipt] = useState<InitialStock | null>(null)
+  const [receipt, setReceipt] = useState<StockReceipt | null>(null)
+  const [addedQuantity, setAddedQuantity] = useState(0)
   const [loadingOptions, setLoadingOptions] = useState(true)
   const [optionsError, setOptionsError] = useState<string | null>(null)
   const [reload, setReload] = useState(0)
@@ -74,7 +75,8 @@ export function NewStockPage() {
 
     setSubmitting(true)
     try {
-      setReceipt(await createInitialStock(productCode, warehouseCode, parsedQuantity, session!.accessToken))
+      setReceipt(await addStock(productCode, warehouseCode, parsedQuantity, session!.accessToken))
+      setAddedQuantity(parsedQuantity)
     } catch (error) {
       if (error instanceof ApiRequestError) {
         if (error.status === 401) {
@@ -105,11 +107,11 @@ export function NewStockPage() {
           <div className="completion-mark" aria-hidden="true">✓</div>
           <div className="eyebrow">Inventory updated</div>
           <h1 id="stock-received-title">Stock received</h1>
-          <p className="muted">The initial stock position was created successfully.</p>
+          <p className="muted">{addedQuantity.toLocaleString()} units were added.</p>
           <dl className="receipt-list">
             <div><dt>Product</dt><dd>{receipt.productCode}</dd></div>
             <div><dt>Warehouse</dt><dd>{receipt.warehouseCode}</dd></div>
-            <div><dt>Quantity</dt><dd>{receipt.quantity.toLocaleString()} units</dd></div>
+            <div><dt>New total</dt><dd>{receipt.quantity.toLocaleString()} units</dd></div>
           </dl>
           <div className="form-actions">
             <button className="button" type="button" onClick={receiveAnother}>Receive another</button>
@@ -121,12 +123,12 @@ export function NewStockPage() {
   }
 
   return (
-    <section aria-labelledby="receive-stock-title">
+    <section className="form-page" aria-labelledby="receive-stock-title">
       <PageHeader
         headingId="receive-stock-title"
         eyebrow="Inventory operation"
-        title="Receive initial stock"
-        description="Create the opening quantity for a product at a warehouse. Existing positions cannot be overwritten."
+        title="Receive stock"
+        description="Add units to a product's quantity at a warehouse. Works whether or not stock already exists there."
       />
 
       {loadingOptions && <LoadingState label="Preparing stock form…" />}
@@ -144,75 +146,66 @@ export function NewStockPage() {
       )}
 
       {!loadingOptions && !optionsError && products.length > 0 && warehouses.length > 0 && (
-        <div className="operation-grid">
-          <form className="form-card form-stack" onSubmit={handleSubmit} noValidate>
-            {formError && <div className="alert alert-error" role="alert">{formError}</div>}
+        <form className="form-card form-stack" onSubmit={handleSubmit} noValidate>
+          {formError && <div className="alert alert-error" role="alert">{formError}</div>}
 
-            <div className="field">
-              <label htmlFor="stock-product">Product</label>
-              <select
-                id="stock-product"
-                value={productCode}
-                onChange={(event) => setProductCode(event.target.value)}
-                aria-invalid={Boolean(errors.productCode)}
-              >
-                {products.map((product) => (
-                  <option value={product.code} key={product.code}>{product.code} — {product.description}</option>
-                ))}
-              </select>
-              {errors.productCode && <span className="field-error">{errors.productCode[0]}</span>}
+          <div className="field">
+            <label htmlFor="stock-product">Product</label>
+            <select
+              id="stock-product"
+              value={productCode}
+              onChange={(event) => setProductCode(event.target.value)}
+              aria-invalid={Boolean(errors.productCode)}
+            >
+              {products.map((product) => (
+                <option value={product.code} key={product.code}>{product.code} — {product.description}</option>
+              ))}
+            </select>
+            {errors.productCode && <span className="field-error">{errors.productCode[0]}</span>}
+          </div>
+
+          <div className="field">
+            <label htmlFor="stock-warehouse">Warehouse</label>
+            <select
+              id="stock-warehouse"
+              value={warehouseCode}
+              onChange={(event) => setWarehouseCode(event.target.value)}
+              aria-invalid={Boolean(errors.warehouseCode)}
+            >
+              {warehouses.map((warehouse) => (
+                <option value={warehouse.code} key={warehouse.code}>
+                  {warehouse.code} — {warehouse.name}{warehouse.code === session?.user.warehouseCode ? ' (current)' : ''}
+                </option>
+              ))}
+            </select>
+            {errors.warehouseCode && <span className="field-error">{errors.warehouseCode[0]}</span>}
+          </div>
+
+          <div className="field">
+            <label htmlFor="stock-quantity">Quantity</label>
+            <div className="input-suffix">
+              <input
+                id="stock-quantity"
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                value={quantity}
+                onChange={(event) => setQuantity(event.target.value)}
+                aria-invalid={Boolean(errors.quantity)}
+              />
+              <span>units</span>
             </div>
+            {errors.quantity && <span className="field-error">{errors.quantity[0]}</span>}
+          </div>
 
-            <div className="field">
-              <label htmlFor="stock-warehouse">Warehouse</label>
-              <select
-                id="stock-warehouse"
-                value={warehouseCode}
-                onChange={(event) => setWarehouseCode(event.target.value)}
-                aria-invalid={Boolean(errors.warehouseCode)}
-              >
-                {warehouses.map((warehouse) => (
-                  <option value={warehouse.code} key={warehouse.code}>
-                    {warehouse.code} — {warehouse.name}{warehouse.code === session?.user.warehouseCode ? ' (current)' : ''}
-                  </option>
-                ))}
-              </select>
-              {errors.warehouseCode && <span className="field-error">{errors.warehouseCode[0]}</span>}
-            </div>
-
-            <div className="field">
-              <label htmlFor="stock-quantity">Quantity</label>
-              <div className="input-suffix">
-                <input
-                  id="stock-quantity"
-                  type="number"
-                  min="1"
-                  step="1"
-                  inputMode="numeric"
-                  value={quantity}
-                  onChange={(event) => setQuantity(event.target.value)}
-                  aria-invalid={Boolean(errors.quantity)}
-                />
-                <span>units</span>
-              </div>
-              {errors.quantity && <span className="field-error">{errors.quantity[0]}</span>}
-            </div>
-
-            <div className="form-actions">
-              <button className="button" type="submit" disabled={submitting}>
-                {submitting ? 'Receiving…' : 'Receive stock'}
-              </button>
-              <Link className="button button-secondary" to="/inventory">Cancel</Link>
-            </div>
-          </form>
-
-          <aside className="context-card">
-            <span className="eyebrow">How this works</span>
-            <h2>Opening quantities only</h2>
-            <p>This operation creates a stock position once. Future movement happens through atomic transfers.</p>
-            <p>Stock reads remain limited to your linked <strong>{session?.user.warehouseCode}</strong> warehouse.</p>
-          </aside>
-        </div>
+          <div className="form-actions">
+            <button className="button" type="submit" disabled={submitting}>
+              {submitting ? 'Receiving…' : 'Receive stock'}
+            </button>
+            <Link className="button button-secondary" to="/inventory">Cancel</Link>
+          </div>
+        </form>
       )}
     </section>
   )

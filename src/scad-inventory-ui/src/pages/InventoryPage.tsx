@@ -70,7 +70,7 @@ export function InventoryPage() {
       {!loading && !error && stock.length === 0 && (
         <EmptyState
           title="No stock positions yet"
-          message="Receive initial stock to begin tracking a product at this warehouse."
+          message="Receive stock to begin tracking a product at this warehouse."
           actionLabel="Receive stock"
           actionTo="/inventory/new"
         />

@@ -50,24 +50,11 @@ export function LoginPage() {
 
   return (
     <main className="login-shell">
-      <section className="login-intro" aria-label="Application introduction">
+      <section className="login-card" aria-labelledby="login-title">
         <div className="login-brand">
           <span className="brand-mark" aria-hidden="true">S</span>
           SCAD Inventory
         </div>
-        <div>
-          <div className="eyebrow eyebrow-light">Warehouse operations</div>
-          <h2>Inventory clarity,<br />from shelf to shipment.</h2>
-          <p>Manage products, receive stock, and move inventory between locations from one focused workspace.</p>
-        </div>
-        <div className="login-proof">
-          <span><strong>Atomic</strong> transfers</span>
-          <span><strong>Scoped</strong> visibility</span>
-          <span><strong>Live</strong> inventory</span>
-        </div>
-      </section>
-      <section className="login-card" aria-labelledby="login-title">
-        <div className="eyebrow">Secure access</div>
         <h1 id="login-title">Welcome back</h1>
         <p className="muted">Sign in with the account linked to your warehouse.</p>
 

@@ -78,54 +78,24 @@ export function DashboardPage() {
           <div className="stat-grid" aria-label="Warehouse summary">
             <StatCard label="Products" value={data.products.length} detail="Shared catalogue items" />
             <StatCard label="Stock positions" value={data.stock.length} detail={`Visible at ${session?.user.warehouseCode}`} />
-            <StatCard label="Units on hand" value={totalUnits.toLocaleString()} detail="Across visible positions" accent />
+            <StatCard label="Units on hand" value={totalUnits.toLocaleString()} detail="Across visible positions" />
             <StatCard label="Warehouses" value={data.warehouses.length} detail="Available transfer locations" />
           </div>
 
-          <div className="dashboard-grid">
-            <section className="panel panel-wide" aria-labelledby="inventory-snapshot-title">
-              <div className="panel-heading">
-                <div>
-                  <span className="eyebrow">Inventory snapshot</span>
-                  <h2 id="inventory-snapshot-title">Current stock</h2>
-                </div>
-                <Link className="text-link" to="/inventory">View all inventory</Link>
+          <section className="panel panel-wide" aria-labelledby="inventory-snapshot-title">
+            <div className="panel-heading">
+              <h2 id="inventory-snapshot-title">Current stock</h2>
+              <Link className="text-link" to="/inventory">View all inventory</Link>
+            </div>
+            {data.stock.length > 0 ? (
+              <StockTable items={data.stock.slice(0, 5)} compact />
+            ) : (
+              <div className="panel-empty">
+                <p>No stock has been received for this warehouse yet.</p>
+                <Link className="text-link" to="/inventory/new">Receive the first stock</Link>
               </div>
-              {data.stock.length > 0 ? (
-                <StockTable items={data.stock.slice(0, 5)} compact />
-              ) : (
-                <div className="panel-empty">
-                  <p>No stock has been received for this warehouse yet.</p>
-                  <Link className="text-link" to="/inventory/new">Receive the first stock</Link>
-                </div>
-              )}
-            </section>
-
-            <aside className="panel quick-actions" aria-labelledby="quick-actions-title">
-              <div className="panel-heading">
-                <div>
-                  <span className="eyebrow">Shortcuts</span>
-                  <h2 id="quick-actions-title">Quick actions</h2>
-                </div>
-              </div>
-              <Link className="quick-action" to="/products/new">
-                <span className="quick-action-icon" aria-hidden="true">+</span>
-                <span><strong>Create product</strong><small>Add to the shared catalogue</small></span>
-              </Link>
-              <Link className="quick-action" to="/inventory/new">
-                <span className="quick-action-icon" aria-hidden="true">↓</span>
-                <span><strong>Receive stock</strong><small>Open an initial position</small></span>
-              </Link>
-              <Link className="quick-action" to="/transfers/new">
-                <span className="quick-action-icon" aria-hidden="true">→</span>
-                <span><strong>Transfer stock</strong><small>Move units atomically</small></span>
-              </Link>
-              <Link className="quick-action" to="/warehouses/new">
-                <span className="quick-action-icon" aria-hidden="true">⌂</span>
-                <span><strong>Add warehouse</strong><small>Create another location</small></span>
-              </Link>
-            </aside>
-          </div>
+            )}
+          </section>
         </>
       )}
     </section>
