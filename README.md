@@ -5,9 +5,10 @@ PostgreSQL, Dapper, and React.
 
 ## Current status
 
-The repository contains a clean application scaffold and a PostgreSQL database
-foundation. API features, authentication, and the product UI will be added in
-small, independently tested slices.
+The repository contains a clean application scaffold, a PostgreSQL database
+foundation, and a configured Dapper/Npgsql connection factory. API features,
+authentication, and the product UI will be added in small, independently tested
+slices.
 
 ## Prerequisites
 
@@ -53,6 +54,16 @@ cp .env.example .env
 docker compose up -d postgres
 ```
 
+Configure the API to use that development database before running it:
+
+```bash
+export ConnectionStrings__Database='Host=localhost;Port=5432;Database=scad_inventory;Username=scad_inventory;Password=scad_inventory_dev_password'
+dotnet run --project src/Scad.Inventory.Api
+```
+
+This connection string is development-only. Production configuration must be
+provided through the environment or a secret store, never committed settings.
+
 The container applies `database/001_schema.sql` and `database/002_seed.sql`
 when its named volume is created. The seed data contains JHB and CPT warehouses,
 product `ABC001`, and stock of 100 and 20 respectively.
@@ -71,7 +82,7 @@ docker compose up -d postgres
 
 ## Planned scope
 
-The next slice adds the Dapper/Npgsql connection factory and API database
-configuration. Order persistence, refresh tokens, and product or warehouse
-update/delete endpoints are intentionally out of scope until the core
+The next slice adds the product API with validation, duplicate handling, and
+real PostgreSQL HTTP tests. Order persistence, refresh tokens, and product or
+warehouse update/delete endpoints are intentionally out of scope until the core
 requirements are complete.
