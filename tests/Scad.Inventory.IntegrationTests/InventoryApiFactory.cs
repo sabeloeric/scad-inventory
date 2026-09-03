@@ -1,14 +1,20 @@
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Dapper;
 using Npgsql;
+using Scad.Inventory.Api.Auth;
+using Scad.Inventory.Api.Models;
 using Testcontainers.PostgreSql;
 
 namespace Scad.Inventory.IntegrationTests;
 
 public sealed class InventoryApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    private const string TestSigningKey = "test-only-signing-key-with-at-least-32-characters";
+
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine")
         .WithDatabase("scad_inventory_tests")
         .WithUsername("postgres")
@@ -31,6 +37,40 @@ public sealed class InventoryApiFactory : WebApplicationFactory<Program>, IAsync
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand(sql, connection);
         await command.ExecuteNonQueryAsync();
+    }
+
+    public HttpClient CreateAuthenticatedClient(long warehouseId = 1, string warehouseCode = "TEST")
+    {
+        var client = CreateClient();
+        var tokenService = Services.GetRequiredService<JwtTokenService>();
+        var token = tokenService.Issue(
+            new User(1, "test@scad.local", string.Empty, warehouseId, warehouseCode));
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token.AccessToken);
+        return client;
+    }
+
+    public async Task SeedDevelopmentUsersAsync()
+    {
+        const string sql = """
+            INSERT INTO warehouses (code, name)
+            VALUES
+                ('JHB', 'Johannesburg Warehouse'),
+                ('CPT', 'Cape Town Warehouse');
+
+            INSERT INTO users (username, password_hash, warehouse_id)
+            SELECT seeded_user.username, seeded_user.password_hash, warehouses.id
+            FROM (
+                VALUES
+                    ('jhb@scad.local', '$2b$12$go5SzFKWYAA0mnszafdl/.pTWYVquKkMXjep5Oun/I9XGcBH7J1Ee', 'JHB'),
+                    ('cpt@scad.local', '$2b$12$go5SzFKWYAA0mnszafdl/.pTWYVquKkMXjep5Oun/I9XGcBH7J1Ee', 'CPT')
+            ) AS seeded_user(username, password_hash, warehouse_code)
+            JOIN warehouses ON warehouses.code = seeded_user.warehouse_code;
+            """;
+
+        await using var connection = new NpgsqlConnection(_postgres.GetConnectionString());
+        await connection.OpenAsync();
+        await connection.ExecuteAsync(sql);
     }
 
     public async Task<long> GetWarehouseIdAsync(string code)
@@ -78,7 +118,11 @@ public sealed class InventoryApiFactory : WebApplicationFactory<Program>, IAsync
             configuration.AddInMemoryCollection(
                 new Dictionary<string, string?>
                 {
-                    ["ConnectionStrings:Database"] = _postgres.GetConnectionString()
+                    ["ConnectionStrings:Database"] = _postgres.GetConnectionString(),
+                    ["Jwt:Issuer"] = "scad-inventory-tests",
+                    ["Jwt:Audience"] = "scad-inventory-tests",
+                    ["Jwt:SigningKey"] = TestSigningKey,
+                    ["Jwt:ExpirationMinutes"] = "5"
                 }));
     }
 

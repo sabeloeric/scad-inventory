@@ -12,7 +12,7 @@ namespace Scad.Inventory.IntegrationTests;
 public sealed class StockEndpointsTests(InventoryApiFactory factory)
     : IClassFixture<InventoryApiFactory>, IAsyncLifetime
 {
-    private readonly HttpClient _client = factory.CreateClient();
+    private readonly HttpClient _client = factory.CreateAuthenticatedClient();
 
     public Task InitializeAsync() => factory.ResetDatabaseAsync();
 
@@ -84,6 +84,40 @@ public sealed class StockEndpointsTests(InventoryApiFactory factory)
         var item = Assert.Single(stock);
         Assert.Equal("JHB", item.WarehouseCode);
         Assert.Equal(100, item.Quantity);
+    }
+
+    [Fact]
+    public async Task Get_stock_returns_only_the_authenticated_users_warehouse()
+    {
+        await _client.PostAsJsonAsync("/products", new CreateProductRequest("ABC001", "Widget"));
+        await _client.PostAsJsonAsync("/warehouses", new CreateWarehouseRequest("JHB", "Johannesburg"));
+        await _client.PostAsJsonAsync("/warehouses", new CreateWarehouseRequest("CPT", "Cape Town"));
+        await _client.PostAsJsonAsync("/stock", new CreateStockRequest("ABC001", "JHB", 100));
+        await _client.PostAsJsonAsync("/stock", new CreateStockRequest("ABC001", "CPT", 20));
+
+        var jhbId = await factory.GetWarehouseIdAsync("JHB");
+        using var jhbClient = factory.CreateAuthenticatedClient(jhbId, "JHB");
+        var response = await jhbClient.GetAsync("/stock?productCode=abc001");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var stock = await response.Content.ReadFromJsonAsync<StockItemResponse[]>();
+        var item = Assert.Single(stock ?? []);
+        Assert.Equal("JHB", item.WarehouseCode);
+        Assert.Equal(100, item.Quantity);
+    }
+
+    [Fact]
+    public async Task Explicit_query_for_another_warehouse_returns_forbidden()
+    {
+        await _client.PostAsJsonAsync("/warehouses", new CreateWarehouseRequest("JHB", "Johannesburg"));
+        var jhbId = await factory.GetWarehouseIdAsync("JHB");
+        using var jhbClient = factory.CreateAuthenticatedClient(jhbId, "JHB");
+
+        var response = await jhbClient.GetAsync("/stock?warehouseCode=CPT");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        var error = await response.Content.ReadFromJsonAsync<ApiError>();
+        Assert.Equal("FORBIDDEN", error?.Code);
     }
 
     private async Task CreateProductAndWarehouseAsync(string productCode, string warehouseCode)

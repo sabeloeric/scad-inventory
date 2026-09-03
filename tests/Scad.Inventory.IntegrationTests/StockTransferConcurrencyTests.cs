@@ -10,7 +10,7 @@ namespace Scad.Inventory.IntegrationTests;
 public sealed class StockTransferConcurrencyTests(InventoryApiFactory factory)
     : IClassFixture<InventoryApiFactory>, IAsyncLifetime
 {
-    private readonly HttpClient _client = factory.CreateClient();
+    private readonly HttpClient _client = factory.CreateAuthenticatedClient();
 
     public Task InitializeAsync() => factory.ResetDatabaseAsync();
 
