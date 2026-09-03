@@ -6,6 +6,12 @@
 # dotenv files
 .env
 
+# Frontend and browser-test output
+**/node_modules/
+**/dist/
+**/playwright-report/
+**/test-results/
+
 # User-specific files
 *.rsuser
 *.suo
