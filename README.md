@@ -230,9 +230,13 @@ routing. They prove database constraints, transaction wiring, rollback,
 serialization, stock authorization, and concurrent locking. Docker must be
 running; they never use the normal development database.
 
-The focused unit tests prove validation and connection-factory behavior. They do
-not pretend that mocked SQL proves PostgreSQL transactions or row locks; those
-behaviors are deliberately covered by real-database integration tests.
+The focused unit tests prove request validation and the pure transfer
+arithmetic extracted into `StockTransferCalculator` (successful transfer,
+exact-balance transfer, insufficient stock, no stock position at all). They
+do not pretend that mocked SQL proves PostgreSQL transactions or row locks;
+those behaviors, along with duplicate-code detection (a database constraint,
+not application logic), are deliberately covered by real-database
+integration tests instead.
 
 Build and lint the UI:
 

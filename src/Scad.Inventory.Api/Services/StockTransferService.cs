@@ -95,13 +95,20 @@ public sealed class StockTransferService(IDbConnectionFactory connectionFactory)
         var source = lockedStock.SingleOrDefault(item => item.WarehouseId == sourceWarehouseId.Value);
         var destination = lockedStock.Single(item => item.WarehouseId == destinationWarehouseId.Value);
 
-        if (source is null || source.Quantity < request.Quantity)
+        StockTransferResult result;
+        try
+        {
+            result = StockTransferCalculator.Apply(
+                source?.Quantity ?? 0,
+                destination.Quantity,
+                request.Quantity,
+                request.SourceWarehouseCode,
+                request.ProductCode);
+        }
+        catch (AppException)
         {
             await transaction.RollbackAsync(cancellationToken);
-            throw new AppException(
-                StatusCodes.Status400BadRequest,
-                "INSUFFICIENT_STOCK",
-                $"Warehouse '{request.SourceWarehouseCode}' has insufficient stock for product '{request.ProductCode}'.");
+            throw;
         }
 
         await connection.ExecuteAsync(
@@ -135,10 +142,10 @@ public sealed class StockTransferService(IDbConnectionFactory connectionFactory)
             request.Quantity,
             new TransferSourceResponse(
                 request.SourceWarehouseCode,
-                source.Quantity - request.Quantity),
+                result.SourceRemaining),
             new TransferDestinationResponse(
                 request.DestinationWarehouseCode,
-                destination.Quantity + request.Quantity));
+                result.DestinationQuantity));
     }
 
     private static AppException NotFound(string code, string resource, string value) =>
