@@ -9,6 +9,8 @@ The repository contains a PostgreSQL database foundation, a configured
 Dapper/Npgsql connection factory, and product list/detail/create endpoints with
 consistent validation and error responses. Warehouse list/create endpoints are
 also implemented. Authentication and the product UI will be added later.
+Insert-only initial stock and warehouse-scoped stock data access are also
+implemented.
 
 ## Prerequisites
 
@@ -77,6 +79,7 @@ GET  /products/{code}
 POST /products
 GET  /warehouses
 POST /warehouses
+POST /stock
 ```
 
 Authentication will protect them when the JWT slice is added.
@@ -99,7 +102,8 @@ docker compose up -d postgres
 
 ## Planned scope
 
-The next slice adds insert-only initial stock and warehouse-scoped stock query
-data access. Order persistence, refresh tokens, and product or warehouse
-update/delete endpoints are intentionally out of scope until the core
-requirements are complete.
+The next slice adds atomic stock transfers with PostgreSQL row locks. The stock
+read repository already requires an authorized warehouse ID; its HTTP endpoint
+will be activated when JWT claims are available. Order persistence, refresh
+tokens, and product or warehouse update/delete endpoints are intentionally out
+of scope until the core requirements are complete.

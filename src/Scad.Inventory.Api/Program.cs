@@ -15,6 +15,7 @@ builder.Services.AddSingleton<IDbConnectionFactory>(
         ?? throw new InvalidOperationException("The 'ConnectionStrings:Database' setting is required.")));
 builder.Services.AddScoped<ProductRepository>();
 builder.Services.AddScoped<WarehouseRepository>();
+builder.Services.AddScoped<StockRepository>();
 
 var app = builder.Build();
 

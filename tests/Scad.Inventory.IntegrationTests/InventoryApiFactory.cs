@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Dapper;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
@@ -30,6 +31,14 @@ public sealed class InventoryApiFactory : WebApplicationFactory<Program>, IAsync
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand(sql, connection);
         await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task<long> GetWarehouseIdAsync(string code)
+    {
+        const string sql = "SELECT id FROM warehouses WHERE code = @Code;";
+
+        await using var connection = new NpgsqlConnection(_postgres.GetConnectionString());
+        return await connection.QuerySingleAsync<long>(sql, new { Code = code });
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
