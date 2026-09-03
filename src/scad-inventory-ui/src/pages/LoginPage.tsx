@@ -14,9 +14,9 @@ export function LoginPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  if (session) return <Navigate to="/products" replace />
+  if (session) return <Navigate to="/dashboard" replace />
 
-  const from = (location.state as { from?: string } | null)?.from ?? '/products'
+  const from = (location.state as { from?: string } | null)?.from ?? '/dashboard'
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -50,10 +50,26 @@ export function LoginPage() {
 
   return (
     <main className="login-shell">
+      <section className="login-intro" aria-label="Application introduction">
+        <div className="login-brand">
+          <span className="brand-mark" aria-hidden="true">S</span>
+          SCAD Inventory
+        </div>
+        <div>
+          <div className="eyebrow eyebrow-light">Warehouse operations</div>
+          <h2>Inventory clarity,<br />from shelf to shipment.</h2>
+          <p>Manage products, receive stock, and move inventory between locations from one focused workspace.</p>
+        </div>
+        <div className="login-proof">
+          <span><strong>Atomic</strong> transfers</span>
+          <span><strong>Scoped</strong> visibility</span>
+          <span><strong>Live</strong> inventory</span>
+        </div>
+      </section>
       <section className="login-card" aria-labelledby="login-title">
-        <div className="eyebrow">Warehouse access</div>
-        <h1 id="login-title">Sign in to inventory</h1>
-        <p className="muted">Use the development account linked to your warehouse.</p>
+        <div className="eyebrow">Secure access</div>
+        <h1 id="login-title">Welcome back</h1>
+        <p className="muted">Sign in with the account linked to your warehouse.</p>
 
         {formError && <div className="alert alert-error" role="alert">{formError}</div>}
 
@@ -93,7 +109,8 @@ export function LoginPage() {
         </form>
 
         <p className="credential-hint">
-          Demo: <code>jhb@scad.local</code> / <code>Password123!</code>
+          Development access<br />
+          <code>jhb@scad.local</code> / <code>Password123!</code>
         </p>
       </section>
     </main>
