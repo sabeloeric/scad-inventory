@@ -7,8 +7,8 @@ PostgreSQL, Dapper, and React.
 
 The repository contains a PostgreSQL database foundation, a configured
 Dapper/Npgsql connection factory, and product list/detail/create endpoints with
-consistent validation and error responses. Authentication and the product UI
-will be added in later slices.
+consistent validation and error responses. Warehouse list/create endpoints are
+also implemented. Authentication and the product UI will be added later.
 
 ## Prerequisites
 
@@ -75,6 +75,8 @@ The following unauthenticated development endpoints are currently available:
 GET  /products
 GET  /products/{code}
 POST /products
+GET  /warehouses
+POST /warehouses
 ```
 
 Authentication will protect them when the JWT slice is added.
@@ -97,7 +99,7 @@ docker compose up -d postgres
 
 ## Planned scope
 
-The next slice adds warehouse list/create endpoints and duplicate-code handling.
-Order persistence, refresh tokens, and product or warehouse update/delete
-endpoints are intentionally out of scope until the core requirements are
-complete.
+The next slice adds insert-only initial stock and warehouse-scoped stock query
+data access. Order persistence, refresh tokens, and product or warehouse
+update/delete endpoints are intentionally out of scope until the core
+requirements are complete.
