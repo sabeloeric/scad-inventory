@@ -33,18 +33,18 @@ public sealed class StockEndpointsTests(InventoryApiFactory factory)
     }
 
     [Fact]
-    public async Task Duplicate_initial_stock_returns_conflict()
+    public async Task Receiving_stock_again_adds_to_the_existing_quantity()
     {
         await CreateProductAndWarehouseAsync("ABC001", "JHB");
         var request = new CreateStockRequest("ABC001", "JHB", 25);
 
         var firstResponse = await _client.PostAsJsonAsync("/stock", request);
-        var duplicateResponse = await _client.PostAsJsonAsync("/stock", request);
+        var secondResponse = await _client.PostAsJsonAsync("/stock", request);
 
         Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
-        Assert.Equal(HttpStatusCode.Conflict, duplicateResponse.StatusCode);
-        var error = await duplicateResponse.Content.ReadFromJsonAsync<ApiError>();
-        Assert.Equal("STOCK_ALREADY_EXISTS", error?.Code);
+        Assert.Equal(HttpStatusCode.Created, secondResponse.StatusCode);
+        var stock = await secondResponse.Content.ReadFromJsonAsync<StockResponse>();
+        Assert.Equal(new StockResponse("ABC001", "JHB", 50), stock);
     }
 
     [Theory]

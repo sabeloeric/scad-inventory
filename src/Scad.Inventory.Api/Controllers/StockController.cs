@@ -44,7 +44,7 @@ public sealed class StockController(StockRepository stockRepository, CurrentUser
         CancellationToken cancellationToken)
     {
         var input = InitialStockRequestValidator.Validate(request);
-        var stock = await stockRepository.CreateAsync(
+        var stock = await stockRepository.AddAsync(
             input.ProductCode,
             input.WarehouseCode,
             input.Quantity,

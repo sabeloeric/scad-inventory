@@ -8,7 +8,7 @@ export interface StockItem {
   quantity: number
 }
 
-export interface InitialStock {
+export interface StockReceipt {
   productCode: string
   warehouseCode: string
   quantity: number
@@ -32,13 +32,13 @@ export function listStock(
   return apiRequest<StockItem[]>(`/stock${query}`, { token, signal })
 }
 
-export function createInitialStock(
+export function addStock(
   productCode: string,
   warehouseCode: string,
   quantity: number,
   token: string,
-): Promise<InitialStock> {
-  return apiRequest<InitialStock>('/stock', {
+): Promise<StockReceipt> {
+  return apiRequest<StockReceipt>('/stock', {
     method: 'POST',
     token,
     body: JSON.stringify({ productCode, warehouseCode, quantity }),

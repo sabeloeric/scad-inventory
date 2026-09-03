@@ -1,5 +1,4 @@
 using Dapper;
-using Npgsql;
 using Scad.Inventory.Api.Errors;
 using Scad.Inventory.Api.Models;
 
@@ -7,7 +6,7 @@ namespace Scad.Inventory.Api.Data;
 
 public sealed class StockRepository(IDbConnectionFactory connectionFactory)
 {
-    public async Task<Stock> CreateAsync(
+    public async Task<Stock> AddAsync(
         string productCode,
         string warehouseCode,
         int quantity,
@@ -15,9 +14,11 @@ public sealed class StockRepository(IDbConnectionFactory connectionFactory)
     {
         const string productSql = "SELECT id FROM products WHERE code = @Code;";
         const string warehouseSql = "SELECT id FROM warehouses WHERE code = @Code;";
-        const string insertSql = """
+        const string upsertSql = """
             INSERT INTO stock (product_id, warehouse_id, quantity)
             VALUES (@ProductId, @WarehouseId, @Quantity)
+            ON CONFLICT (product_id, warehouse_id)
+            DO UPDATE SET quantity = stock.quantity + EXCLUDED.quantity, updated_at = NOW()
             RETURNING product_id AS ProductId,
                       warehouse_id AS WarehouseId,
                       quantity,
@@ -55,23 +56,11 @@ public sealed class StockRepository(IDbConnectionFactory connectionFactory)
                 $"Warehouse '{warehouseCode}' was not found.");
         }
 
-        try
-        {
-            return await connection.QuerySingleAsync<Stock>(
-                new CommandDefinition(
-                    insertSql,
-                    new { ProductId = productId.Value, WarehouseId = warehouseId.Value, Quantity = quantity },
-                    cancellationToken: cancellationToken));
-        }
-        catch (PostgresException exception)
-            when (exception.SqlState == PostgresErrorCodes.UniqueViolation
-                  && exception.ConstraintName == "pk_stock")
-        {
-            throw new AppException(
-                StatusCodes.Status409Conflict,
-                "STOCK_ALREADY_EXISTS",
-                $"Initial stock already exists for product '{productCode}' at warehouse '{warehouseCode}'.");
-        }
+        return await connection.QuerySingleAsync<Stock>(
+            new CommandDefinition(
+                upsertSql,
+                new { ProductId = productId.Value, WarehouseId = warehouseId.Value, Quantity = quantity },
+                cancellationToken: cancellationToken));
     }
 
     public async Task<IReadOnlyList<StockItem>> GetAsync(
