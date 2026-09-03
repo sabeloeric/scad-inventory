@@ -8,9 +8,9 @@ transfers that prevent concurrent overselling.
 ## Architecture
 
 ```text
-React + Vite browser UI
+React browser UI served by Nginx
         |
-        | JSON + JWT bearer token (/api proxy in development)
+        | JSON + JWT bearer token (/api reverse proxy)
         v
 ASP.NET Core controllers and services
         |
@@ -37,7 +37,7 @@ models. No ORM is used.
 - Real PostgreSQL HTTP integration tests using Testcontainers.
 - React login, product list, product detail, and product creation flows.
 - A Playwright flow covering the UI, API, authentication, and PostgreSQL.
-- Docker Compose for the API and PostgreSQL.
+- Docker Compose for PostgreSQL, the API, the UI, and profile-gated Playwright.
 
 ## Prerequisites
 
@@ -47,21 +47,25 @@ The repository was verified with:
 - Node.js 24.20.0 and npm 11.19.0
 - Docker 29.7.2 and Docker Compose 5.5.0
 
-Docker must be running for Compose, integration tests, and Playwright. The
-Playwright installation also downloads Chromium.
+Docker must be running for Compose, integration tests, and the containerized
+Playwright flow. Node.js is needed only for local UI development; a local
+Playwright run also downloads Chromium.
 
 ## Quick start with Docker
 
-Copy the development configuration and start the API plus PostgreSQL:
+Copy the development configuration and start the complete application:
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-The API listens at `http://localhost:5097`. PostgreSQL listens at
-`localhost:5432`. The database container applies `database/001_schema.sql` and
-`database/002_seed.sql` when its named volume is first created.
+Open the UI at `http://localhost:5173`. Its Nginx server proxies `/api` requests
+to the API container. The API is also exposed at `http://localhost:5097`, and
+PostgreSQL is exposed at `localhost:5432`. The database container applies
+`database/001_schema.sql` and `database/002_seed.sql` when its named volume is
+first created. Compose health checks start the UI only after PostgreSQL and the
+API are ready.
 
 To stop the services without deleting data:
 
@@ -239,7 +243,21 @@ npm run lint
 npm run build
 ```
 
-Run the browser test:
+Run the complete containerized browser test from the repository root:
+
+```bash
+bash tests/e2e/run-compose-e2e.sh
+```
+
+The wrapper builds PostgreSQL, the API, the Nginx-hosted UI, and the Playwright
+runner in an isolated `scad-inventory-e2e` Compose project. It waits for service
+health checks, creates a uniquely coded product through the browser, returns
+Playwright's exit code, and always removes its containers, network, and database
+volume. Its development-only configuration uses host ports `55432`, `5098`, and
+`5174`, so it can run alongside the default application stack.
+
+For an optional local Playwright run, first start the default Compose app, then
+run:
 
 ```bash
 cd tests/e2e
@@ -248,9 +266,8 @@ npx playwright install chromium
 npm test
 ```
 
-Playwright starts a dedicated Compose project on API port `5098` and PostgreSQL
-port `55432`, starts Vite on port `5174`, creates a uniquely coded product, and
-removes its test containers and database volume when finished.
+The local runner targets `http://127.0.0.1:5173` by default. Set
+`PLAYWRIGHT_BASE_URL` to test a different UI address.
 
 ## Transfer concurrency and integrity
 
@@ -304,7 +321,6 @@ The following work is outside the assessed core and was intentionally omitted:
 - Registration, refresh tokens, password reset, and a full identity system.
 - Multi-tenancy, message brokers, and transactional outbox publishing.
 - An ORM, generic repository, CQRS, MediatR, or microservices.
-- UI containerization; Compose contains the required API and PostgreSQL only.
 
 If reliable post-transfer event publication becomes necessary, the intended
 extension is a transactional outbox row written in the stock transaction, then
